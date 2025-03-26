@@ -568,7 +568,7 @@ def main():
     glClearColor(0.5, 0.5, 0.5, 1.0)
     
     brick_tex = load_texture("textures/brick.jpg")
-    exit_tex = load_texture("textures/exit.jpg")
+    exit_tex = load_texture("textures/exit.png") #changed to png
     ground_tex = load_texture("textures/ground.jpg")
     roof_tex = load_texture("textures/roof.jpg")
     
