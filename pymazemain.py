@@ -188,9 +188,9 @@ def build_maze_geometry():
                 x, 1.0, z+1, 0.0, 1.0,
             ])
             cell = maze[z][x]
-            # Treat both '#' and 'B' as walls (and 'E' as exit wall).
+            # Treat '#' and 'B' as walls, and 'E' as the exit wall.
             if cell in ('#', 'B', 'E'):
-                # Check each of the four directions; if the neighbor is not a wall (or black) then draw that face.
+                # Draw a wall face only if the adjacent cell (in each cardinal direction) is not also a wall.
                 if z == 0 or maze[z-1][x] not in ('#','B','E'):
                     target_list = wall_exit_vertices if cell == "E" else wall_brick_vertices
                     target_list.extend([
@@ -314,6 +314,7 @@ def draw_help(window_width, window_height):
     glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
 
+# In the following drawing functions, we now center the "@" icon in its cell.
 def draw_full_map(window_width, window_height):
     global full_map_offset_x, full_map_offset_y
     if not full_map_panned:
@@ -349,6 +350,7 @@ def draw_full_map(window_width, window_height):
     start_x = (window_width - map_width)/2 + full_map_offset_x
     start_y = (window_height - map_height)/2 + full_map_offset_y
     
+    # Draw map background border.
     glColor3f(0, 0, 0)
     glBegin(GL_QUADS)
     glVertex2f(start_x - 2, start_y - 2)
@@ -357,6 +359,7 @@ def draw_full_map(window_width, window_height):
     glVertex2f(start_x - 2, start_y + map_height + 2)
     glEnd()
     
+    # Draw each cell.
     for i in range(rows):
         for j in range(cols):
             x = start_x + j * cell_size
@@ -380,14 +383,15 @@ def draw_full_map(window_width, window_height):
             glVertex2f(x, y + cell_size)
             glEnd()
     
+    # Center the player icon within its cell.
     player_cell_x = int(player_pos.x)
     player_cell_z = int(player_pos.z)
-    x = start_x + player_cell_x * cell_size
-    y = start_y + (rows - 1 - player_cell_z) * cell_size
+    icon_x = start_x + player_cell_x * cell_size + cell_size/2 - 4  # Adjust horizontal offset (approx. half width of '@')
+    icon_y = start_y + (rows - 1 - player_cell_z) * cell_size + cell_size/2 - 6  # Adjust vertical offset as needed
     blink = (int(glfw.get_time() * 2) % 2 == 0)
     if blink:
         glColor3f(0, 1, 0)
-        draw_text(x, y, "@")
+        draw_text(icon_x, icon_y, "@")
     
     glPopMatrix()
     glMatrixMode(GL_PROJECTION)
@@ -463,8 +467,9 @@ def draw_minimap(window_width, window_height):
             glVertex2f(x, y + cell_size)
             glEnd()
     
-    center_x = start_x + (region_size // 2) * cell_size
-    center_y = start_y + (region_size // 2) * cell_size - cell_size
+    # Center the player icon in the minimap.
+    center_x = start_x + (region_size // 2) * cell_size + cell_size/2 - 4
+    center_y = start_y + (region_size // 2) * cell_size + cell_size/2 - 6
     blink = (int(glfw.get_time() * 2) % 2 == 0)
     if blink:
         glColor3f(0, 1, 0)
@@ -537,6 +542,7 @@ def main():
     if maze[spawn_y][spawn_x] not in (' ', 'E'):
         spawn_x, spawn_y = find_nearest_floor(spawn_x, spawn_y, maze)
     
+    # Set player position at the center of the spawn cell.
     player_pos = glm.vec3(spawn_x + 0.5, 0.0, spawn_y + 0.5)
     area_type = get_area_type(spawn_x, spawn_y, rooms)
     print(f"Player starting cell: ({spawn_x}, {spawn_y}) is in a {area_type}.")
@@ -554,7 +560,7 @@ def main():
     glClearColor(0.5, 0.5, 0.5, 1.0)
     
     brick_tex = load_texture("textures/brick.jpg")
-    exit_tex = load_texture("textures/exit.jpg")
+    exit_tex = load_texture("textures/exit.png")
     ground_tex = load_texture("textures/ground.jpg")
     roof_tex = load_texture("textures/roof.jpg")
     
