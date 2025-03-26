@@ -188,9 +188,8 @@ def build_maze_geometry():
                 x, 1.0, z+1, 0.0, 1.0,
             ])
             cell = maze[z][x]
-            # Treat '#' and 'B' as walls, and 'E' as the exit wall.
+            # Treat '#' and 'B' as walls, and 'E' as exit wall.
             if cell in ('#', 'B', 'E'):
-                # Draw a wall face only if the adjacent cell (in each cardinal direction) is not also a wall.
                 if z == 0 or maze[z-1][x] not in ('#','B','E'):
                     target_list = wall_exit_vertices if cell == "E" else wall_brick_vertices
                     target_list.extend([
@@ -314,7 +313,7 @@ def draw_help(window_width, window_height):
     glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
 
-# In the following drawing functions, we now center the "@" icon in its cell.
+# In the following drawing functions we now center the "@" icon properly.
 def draw_full_map(window_width, window_height):
     global full_map_offset_x, full_map_offset_y
     if not full_map_panned:
@@ -386,8 +385,9 @@ def draw_full_map(window_width, window_height):
     # Center the player icon within its cell.
     player_cell_x = int(player_pos.x)
     player_cell_z = int(player_pos.z)
-    icon_x = start_x + player_cell_x * cell_size + cell_size/2 - 4  # Adjust horizontal offset (approx. half width of '@')
-    icon_y = start_y + (rows - 1 - player_cell_z) * cell_size + cell_size/2 - 6  # Adjust vertical offset as needed
+    # Using GLUT_BITMAP_8_BY_13 (approx. 8x13), center the text.
+    icon_x = start_x + player_cell_x * cell_size + (cell_size - 8) / 2
+    icon_y = start_y + (rows - 1 - player_cell_z) * cell_size + (cell_size - 13) / 2
     blink = (int(glfw.get_time() * 2) % 2 == 0)
     if blink:
         glColor3f(0, 1, 0)
@@ -468,8 +468,9 @@ def draw_minimap(window_width, window_height):
             glEnd()
     
     # Center the player icon in the minimap.
-    center_x = start_x + (region_size // 2) * cell_size + cell_size/2 - 4
-    center_y = start_y + (region_size // 2) * cell_size + cell_size/2 - 6
+    # For minimap, using cell_size 8 and the same text size.
+    center_x = start_x + (region_size // 2) * cell_size + (cell_size - 8) / 2
+    center_y = start_y + (region_size // 2) * cell_size + (cell_size - 13) / 2
     blink = (int(glfw.get_time() * 2) % 2 == 0)
     if blink:
         glColor3f(0, 1, 0)
@@ -544,7 +545,7 @@ def main():
     
     # Set player position at the center of the spawn cell.
     player_pos = glm.vec3(spawn_x + 0.5, 0.0, spawn_y + 0.5)
-    area_type = get_area_type(spawn_x, spawn_y, rooms)
+    area_type = (lambda: "room" if any(room.x1 <= spawn_x < room.x2 and room.y1 <= spawn_y < room.y2 for room in rooms) else "corridor")()
     print(f"Player starting cell: ({spawn_x}, {spawn_y}) is in a {area_type}.")
     print("Maze cell at player:", maze[int(player_pos.z)][int(player_pos.x)])
     

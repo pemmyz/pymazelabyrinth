@@ -2,7 +2,7 @@ from collections import deque
 import heapq
 
 def neighbors(cell, maze):
-    # cell is a tuple (x, y) where x is column and y is row.
+    # Only allow cells that are floor (' ') or the exit ('E').
     x, y = cell
     potential = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
     valid = []
@@ -10,7 +10,7 @@ def neighbors(cell, maze):
     cols = len(maze[0])
     for nx, ny in potential:
         if 0 <= nx < cols and 0 <= ny < rows:
-            if maze[ny][nx] != "#":  # '#' represents a wall
+            if maze[ny][nx] in (' ', 'E'):
                 valid.append((nx, ny))
     return valid
 
@@ -34,7 +34,7 @@ def bfs_path(start, goal, maze):
 
 def bfs_path_no_exit(start, goal, maze, exit_cell):
     """
-    A BFS that avoids passing through the exit cell if the goal is not the exit.
+    BFS that avoids passing through the exit cell if the goal is not the exit.
     """
     queue = deque([start])
     came_from = {start: None}
@@ -49,7 +49,7 @@ def bfs_path_no_exit(start, goal, maze, exit_cell):
             return path
         for n in neighbors(current, maze):
             if n == exit_cell and goal != exit_cell:
-                continue  # Skip the exit cell if we are not heading there.
+                continue  # Skip the exit if not the target.
             if n not in came_from:
                 came_from[n] = current
                 queue.append(n)
@@ -145,21 +145,19 @@ def find_exit_astar(player_pos, maze):
     path.reverse()
     return path
 
+def cell_in_room(cell, room):
+    """
+    Helper to determine if a given cell (x, y) is inside a room.
+    Assumes room has attributes x1, y1 (inclusive) and x2, y2 (exclusive).
+    """
+    x, y = cell
+    return room.x1 <= x < room.x2 and room.y1 <= y < room.y2
+
 def find_exit_explore(player_pos, maze, rooms):
     """
-    Bot Mode 4:
-      - First, if the exit room's center (the room containing the exit) is more than 1 cell away
-        from the start, the bot will head there using a BFS that avoids stepping on the exit.
-      - Otherwise, if the exit room is within 1 cell (or the player is in that room and near the exit),
-        the bot postpones going there.
-      - In the exploration loop, if the current position is in the exit room and within 1 cell of the exit,
-        the bot forces a detour by selecting the farthest unexplored room (in Manhattan distance from the exit)
-        so as to "turn back" before reaching the exit.
-      - Only after all other rooms are visited does it finally go to the exit.
+    Exploration mode: visit all room centers before heading to the exit.
     """
     start = (int(player_pos.x), int(player_pos.z))
-    
-    # Determine the exit cell.
     exit_cell = None
     rows = len(maze)
     cols = len(maze[0])
@@ -180,7 +178,7 @@ def find_exit_explore(player_pos, maze, rooms):
             exit_room = room
             break
 
-    # Partition room centers: get the center of the exit room and centers of other rooms.
+    # Collect centers of all rooms.
     exit_room_center = None
     other_room_centers = []
     for room in rooms:
@@ -194,7 +192,7 @@ def find_exit_explore(player_pos, maze, rooms):
     overall_path = []
     current = start
 
-    # If the exit room center exists and is more than 1 cell away from start, go there first.
+    # If the exit room center exists and is more than 1 cell away, go there first.
     if exit_room_center is not None and heuristic(start, exit_room_center) > 1:
         segment = bfs_path_no_exit(current, exit_room_center, maze, exit_cell)
         if not segment:
@@ -202,14 +200,12 @@ def find_exit_explore(player_pos, maze, rooms):
         overall_path.extend(segment)
         current = exit_room_center
     else:
-        # If the exit room center is too near (<=1 cell) from the start, postpone it.
         if exit_room_center is not None and exit_room_center not in other_room_centers:
             other_room_centers.append(exit_room_center)
             exit_room_center = None
 
     # Explore all other room centers.
     while other_room_centers:
-        # If current is in the exit room and within 1 cell of the exit, force a detour
         if exit_room is not None and cell_in_room(current, exit_room) and heuristic(current, exit_cell) <= 1:
             other_room_centers.sort(key=lambda p: heuristic(p, exit_cell), reverse=True)
         else:
@@ -223,7 +219,7 @@ def find_exit_explore(player_pos, maze, rooms):
                 overall_path.extend(segment)
             current = target
 
-    # Finally, go from the last visited room to the exit.
+    # Finally, go from last visited room to the exit.
     segment = bfs_path(current, exit_cell, maze)
     if segment:
         if overall_path and segment[0] == overall_path[-1]:
@@ -232,10 +228,19 @@ def find_exit_explore(player_pos, maze, rooms):
             overall_path.extend(segment)
     return overall_path
 
-def cell_in_room(cell, room):
-    """
-    Helper function to determine if a given cell (x, y) lies within a room.
-    Assumes the room has attributes x1, y1 (inclusive) and x2, y2 (exclusive).
-    """
-    x, y = cell
-    return room.x1 <= x < room.x2 and room.y1 <= y < room.y2
+if __name__ == "__main__":
+    # Simple test for A* on a small maze.
+    class DummyPos:
+        def __init__(self, x, z):
+            self.x = x
+            self.z = z
+    maze = [
+        "##########",
+        "#   #    #",
+        "# ## # ##E",
+        "#    #   #",
+        "##########"
+    ]
+    dummy_pos = DummyPos(1, 1)
+    path = find_exit_astar(dummy_pos, maze)
+    print("Path to exit:", path)
