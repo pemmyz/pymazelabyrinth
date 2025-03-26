@@ -1,6 +1,6 @@
 # pymazelabyrinth
 3D Maze
-W.I.P. 
+W.I.P. tested on Python 3.10.12 (main, Feb  4 2025, 14:57:36) [GCC 11.4.0] on linux
 
 # 🧱 Brick Labyrinth
 
