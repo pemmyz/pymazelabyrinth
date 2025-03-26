@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#First version on github!
+#First version on github!!
 import random
 import nethack_map_generator  # Ensure this file is in the same directory.
 import bot_pathfinding
