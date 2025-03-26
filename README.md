@@ -13,6 +13,18 @@ A 3D first-person maze exploration game built with **Python**, **OpenGL**, and *
 ![Game 1](screenshots/game_1.png)
 
 
+
+## 🌀 Influence: Windows 3D Maze Screensaver
+
+This game draws inspiration from the nostalgic **Windows 95 3D Maze Screensaver**, bringing its iconic style into an interactive form:
+
+- **First-person maze navigation** – just like the screensaver, you explore the maze from a first-person view.
+- **Grid-based movement and 90° turns** – the maze layout mimics the classic tile-based structure.
+- **Simple 3D visuals** – with textured walls, ceilings, and floors that echo the retro aesthetic.
+- **Powered by OpenGL** – like the original screensaver, this game uses **OpenGL** for rendering the 3D environment.
+
+This screensaver served as a creative foundation, now reimagined as a playable, procedurally generated game with added features like minimaps and AI navigation.
+
 ---
 
 ## 🎮 Features
