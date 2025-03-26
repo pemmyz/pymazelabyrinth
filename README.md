@@ -67,11 +67,6 @@ A 3D first-person maze exploration game built with **Python**, **OpenGL**, and *
 - PIL (Pillow)
 - `nethack_map_generator.py` and `bot_pathfinding.py` (included or to be added)
 
-### ▶️ Run the game
-
-```bash
-python3 brick_labyrinth.py
-
 
 ## 🧩 Module Overview
 
