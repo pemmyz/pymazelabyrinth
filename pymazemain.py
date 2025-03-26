@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-#First version on github!
 import random
-import nethack_map_generator  # Ensure this file is in the same directory.
-import bot_pathfinding
+import nethack_map_generator  # Updated map generation module
+import bot_pathfinding         # Updated pathfinding module
 import glfw
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -42,7 +41,7 @@ is_turning = False
 start_angle = 0.0
 target_angle = 0.0
 turn_progress = 0.0
-turn_duration = 0.15  # Duration for turning
+turn_duration = 0.15
 
 # --- Full Map Toggle State ---
 show_full_map = False
@@ -57,11 +56,11 @@ paused = False
 p_toggle_pressed = False
 
 # --- Discovery Globals ---
-discovery_range = 1  # cells around the player that become discovered (3x3 area)
-discovered = []      # 2D boolean array; same dimensions as maze
+discovery_range = 1
+discovered = []
 
 # --- Corridor Discovery Depth Variable ---
-max_corridor_discovery_depth = 20  # maximum number of cells ahead to reveal in a corridor
+max_corridor_discovery_depth = 20
 
 # --- Bot Variables ---
 bot_mode = False
@@ -76,11 +75,10 @@ unstuck_attempts = 0
 full_map_offset_x = 0
 full_map_offset_y = 0
 full_map_dragging = False
-full_map_panned = False  # Indicates if user has manually panned the full map.
+full_map_panned = False
 prev_mouse_x = 0
 prev_mouse_y = 0
 
-# --- Helper: Compute the Largest Connected Component (LCC) of floor cells ---
 def compute_largest_component(maze):
     rows = len(maze)
     cols = len(maze[0])
@@ -105,33 +103,28 @@ def compute_largest_component(maze):
                     largest = comp
     return largest
 
-# --- Helper: Find the nearest valid floor cell using BFS ---
 def find_nearest_floor(x, y, maze):
     rows = len(maze)
     cols = len(maze[0])
-    queue = deque()
-    queue.append((x, y))
-    visited = set()
-    visited.add((x, y))
+    queue = deque([(x, y)])
+    visited = {(x, y)}
     while queue:
         cx, cy = queue.popleft()
-        if maze[cy][cx] == ' ':
+        if maze[cy][cx] in (' ', 'E'):
             return cx, cy
-        for dx, dy in [(0,1), (0,-1), (1,0), (-1,0)]:
-            nx, ny = cx + dx, cy + dy
+        for dx, dy in [(1,0), (-1,0), (0,1), (0,-1)]:
+            nx, ny = cx+dx, cy+dy
             if 0 <= nx < cols and 0 <= ny < rows and (nx, ny) not in visited:
                 visited.add((nx, ny))
                 queue.append((nx, ny))
-    return x, y  # fallback
+    return x, y
 
-# --- Helper: Determine area type (room vs. corridor) ---
 def get_area_type(x, y, rooms):
     for room in rooms:
         if room.x1 <= x < room.x2 and room.y1 <= y < room.y2:
             return "room"
     return "corridor"
 
-# --- Texture Loading (for 3D view) ---
 def load_texture(path):
     try:
         img = Image.open(path).transpose(Image.FLIP_TOP_BOTTOM)
@@ -149,7 +142,6 @@ def load_texture(path):
                  GL_RGB, GL_UNSIGNED_BYTE, img_data)
     return tex
 
-# --- Mouse Callbacks for Full Map Panning ---
 def mouse_button_callback(window, button, action, mods):
     global full_map_dragging, prev_mouse_x, prev_mouse_y, full_map_panned
     if button == glfw.MOUSE_BUTTON_LEFT and show_full_map:
@@ -169,7 +161,6 @@ def cursor_position_callback(window, xpos, ypos):
         full_map_offset_y -= dy
         prev_mouse_x, prev_mouse_y = xpos, ypos
 
-# --- Build Maze Geometry into Vertex Arrays ---
 def build_maze_geometry():
     global maze
     floor_vertices = []
@@ -197,8 +188,10 @@ def build_maze_geometry():
                 x, 1.0, z+1, 0.0, 1.0,
             ])
             cell = maze[z][x]
-            if cell in "#E":
-                if z == 0 or maze[z-1][x] not in "#E":
+            # Treat both '#' and 'B' as walls (and 'E' as exit wall).
+            if cell in ('#', 'B', 'E'):
+                # Check each of the four directions; if the neighbor is not a wall (or black) then draw that face.
+                if z == 0 or maze[z-1][x] not in ('#','B','E'):
                     target_list = wall_exit_vertices if cell == "E" else wall_brick_vertices
                     target_list.extend([
                         x, 0.0, z,   0.0, 0.0,
@@ -208,7 +201,7 @@ def build_maze_geometry():
                         x+1, 1.0, z, 1.0, 1.0,
                         x, 1.0, z,   0.0, 1.0,
                     ])
-                if z == len(maze)-1 or maze[z+1][x] not in "#E":
+                if z == len(maze)-1 or maze[z+1][x] not in ('#','B','E'):
                     target_list = wall_exit_vertices if cell == "E" else wall_brick_vertices
                     target_list.extend([
                         x, 0.0, z+1,   0.0, 0.0,
@@ -218,7 +211,7 @@ def build_maze_geometry():
                         x+1, 1.0, z+1, 1.0, 1.0,
                         x, 1.0, z+1,   0.0, 1.0,
                     ])
-                if x == 0 or maze[z][x-1] not in "#E":
+                if x == 0 or maze[z][x-1] not in ('#','B','E'):
                     target_list = wall_exit_vertices if cell == "E" else wall_brick_vertices
                     target_list.extend([
                         x, 0.0, z,   0.0, 0.0,
@@ -228,7 +221,7 @@ def build_maze_geometry():
                         x, 1.0, z+1, 1.0, 1.0,
                         x, 1.0, z,   0.0, 1.0,
                     ])
-                if x == len(maze[0])-1 or maze[z][x+1] not in "#E":
+                if x == len(maze[0])-1 or maze[z][x+1] not in ('#','B','E'):
                     target_list = wall_exit_vertices if cell == "E" else wall_brick_vertices
                     target_list.extend([
                         x+1, 0.0, z,   0.0, 0.0,
@@ -240,7 +233,6 @@ def build_maze_geometry():
                     ])
     return (floor_vertices, ceiling_vertices, wall_brick_vertices, wall_exit_vertices)
 
-# --- Create a VBO from Vertex Data ---
 def create_vbo(vertex_data):
     arr = np.array(vertex_data, dtype=np.float32)
     vbo_id = glGenBuffers(1)
@@ -250,7 +242,6 @@ def create_vbo(vertex_data):
     vertex_count = len(vertex_data) // 5
     return vbo_id, vertex_count
 
-# --- Rebuild Geometry VBOs ---
 def rebuild_geometry():
     global floor_vbo, floor_vertex_count, ceiling_vbo, ceiling_vertex_count
     global wall_brick_vbo, wall_brick_vertex_count, wall_exit_vbo, wall_exit_vertex_count
@@ -269,13 +260,11 @@ def rebuild_geometry():
     wall_exit_vbo, wall_exit_vertex_count = create_vbo(wall_exit_data)
     print("Geometry rebuilt: floor =", floor_vertex_count, "walls =", wall_brick_vertex_count + wall_exit_vertex_count)
 
-# --- Helper Function to Draw Bitmap Text ---
 def draw_text(x, y, text):
     glWindowPos2i(int(x), int(y))
     for ch in text:
         glutBitmapCharacter(GLUT_BITMAP_8_BY_13, ord(ch))
 
-# --- Help Overlay ---
 def draw_help(window_width, window_height):
     glDisable(GL_TEXTURE_2D)
     glDisable(GL_LIGHTING)
@@ -325,7 +314,6 @@ def draw_help(window_width, window_height):
     glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
 
-# --- Full Map Overlay ---
 def draw_full_map(window_width, window_height):
     global full_map_offset_x, full_map_offset_y
     if not full_map_panned:
@@ -336,8 +324,8 @@ def draw_full_map(window_width, window_height):
         map_height = rows * cell_size
         player_cell_x = int(player_pos.x)
         player_cell_z = int(player_pos.z)
-        full_map_offset_x = (map_width) / 2 - (player_cell_x * cell_size + cell_size/2)
-        full_map_offset_y = (map_height) / 2 - (((rows - 1 - player_cell_z) * cell_size) + cell_size/2)
+        full_map_offset_x = map_width/2 - (player_cell_x * cell_size + cell_size/2)
+        full_map_offset_y = map_height/2 - (((rows - 1 - player_cell_z) * cell_size) + cell_size/2)
     
     glDisable(GL_TEXTURE_2D)
     glDisable(GL_LIGHTING)
@@ -358,8 +346,8 @@ def draw_full_map(window_width, window_height):
     cols = len(maze[0])
     map_width = cols * cell_size
     map_height = rows * cell_size
-    start_x = (window_width - map_width) / 2 + full_map_offset_x
-    start_y = (window_height - map_height) / 2 + full_map_offset_y
+    start_x = (window_width - map_width)/2 + full_map_offset_x
+    start_y = (window_height - map_height)/2 + full_map_offset_y
     
     glColor3f(0, 0, 0)
     glBegin(GL_QUADS)
@@ -379,6 +367,8 @@ def draw_full_map(window_width, window_height):
                     glColor3f(0.3, 0.3, 0.3)
                 elif cell == "E":
                     glColor3f(1, 0, 0)
+                elif cell == "B":
+                    glColor3f(0, 0, 0)
                 else:
                     glColor3f(1, 1, 1)
             else:
@@ -408,7 +398,6 @@ def draw_full_map(window_width, window_height):
     glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
 
-# --- Minimap Overlay ---
 def draw_minimap(window_width, window_height):
     glDisable(GL_TEXTURE_2D)
     glDisable(GL_LIGHTING)
@@ -461,6 +450,8 @@ def draw_minimap(window_width, window_height):
                     glColor3f(0.3, 0.3, 0.3)
                 elif cell == "E":
                     glColor3f(1, 0, 0)
+                elif cell == "B":
+                    glColor3f(0, 0, 0)
                 else:
                     glColor3f(1, 1, 1)
             else:
@@ -488,12 +479,11 @@ def draw_minimap(window_width, window_height):
     glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
 
-# --- 3D Collision Check ---
 def is_collision(x, z):
+    """Return True if the cell at (x, z) is a wall ('#') or a black cell ('B')."""
     maze_x, maze_z = int(x), int(z)
-    return maze[maze_z][maze_x] == "#"
+    return maze[maze_z][maze_x] in ('#', 'B')
 
-# --- Main Game Loop ---
 def main():
     global maze, rooms, player_pos
     global player_angle_deg, is_moving, start_pos, target_pos, move_progress
@@ -507,7 +497,7 @@ def main():
     reset_requested = False
     exit_requested = False
 
-    # Generate a new random seed between 1 and 99 for each new map.
+    # Generate a new random seed.
     initial_seed = random.randint(1, 99)
     print("Initial seed:", initial_seed)
     maze, rooms = nethack_map_generator.create_map(
@@ -525,15 +515,11 @@ def main():
     cols = len(maze[0])
     discovered = [[False for _ in range(cols)] for _ in range(rows)]
     
-    # --- Modified Player Spawn Logic: Spawn inside a room
+    # Spawn the player inside a room.
     if rooms:
-        # Avoid the exit room if possible.
-        if len(rooms) > 1:
-            candidate_rooms = rooms[:-1]
-        else:
-            candidate_rooms = rooms
+        candidate_rooms = rooms[:-1] if len(rooms) > 1 else rooms
         chosen_room = random.choice(candidate_rooms)
-        # Choose an inner candidate so that on at least one axis walls are close.
+        # Use interior candidates if room is large enough (to avoid walls).
         if (chosen_room.x2 - chosen_room.x1) > 2 and (chosen_room.y2 - chosen_room.y1) > 2:
             inner_candidates = [
                 (chosen_room.x1 + 1, chosen_room.y1 + 1),
@@ -547,8 +533,8 @@ def main():
     else:
         spawn_x, spawn_y = (cols // 2, rows // 2)
     
-    # Safety check.
-    if maze[spawn_y][spawn_x] != ' ':
+    # Ensure the spawn is not in a wall or black cell.
+    if maze[spawn_y][spawn_x] not in (' ', 'E'):
         spawn_x, spawn_y = find_nearest_floor(spawn_x, spawn_y, maze)
     
     player_pos = glm.vec3(spawn_x + 0.5, 0.0, spawn_y + 0.5)
@@ -568,7 +554,7 @@ def main():
     glClearColor(0.5, 0.5, 0.5, 1.0)
     
     brick_tex = load_texture("textures/brick.jpg")
-    exit_tex = load_texture("textures/exit.png") #changed to png
+    exit_tex = load_texture("textures/exit.jpg")
     ground_tex = load_texture("textures/ground.jpg")
     roof_tex = load_texture("textures/roof.jpg")
     
@@ -578,8 +564,6 @@ def main():
     
     rebuild_geometry()
     
-    # --- Bot Initialization with Pause ---
-    # If bot mode was enabled, pause for 3 seconds before resuming bot mode.
     if bot_mode:
         print("Bot mode is enabled. Pausing for 3 seconds before resuming bot pathfinding...")
         time.sleep(3)
@@ -639,8 +623,8 @@ def main():
                     map_height = rows * cell_size
                     player_cell_x = int(player_pos.x)
                     player_cell_z = int(player_pos.z)
-                    full_map_offset_x = (map_width)/2 - (player_cell_x * cell_size + cell_size/2)
-                    full_map_offset_y = (map_height)/2 - (((rows - 1 - player_cell_z) * cell_size) + cell_size/2)
+                    full_map_offset_x = map_width/2 - (player_cell_x * cell_size + cell_size/2)
+                    full_map_offset_y = map_height/2 - (((rows - 1 - player_cell_z) * cell_size) + cell_size/2)
                 else:
                     full_map_offset_x = 0
                     full_map_offset_y = 0
@@ -701,7 +685,7 @@ def main():
         if not is_moving and not is_turning:
             if bot_mode and bot_path_index < len(bot_path):
                 current_cell = (int(player_pos.x), int(player_pos.z))
-                if maze[current_cell[1]][current_cell[0]] == "#":
+                if maze[current_cell[1]][current_cell[0]] in ('#', 'B'):
                     if not unstuck_mode:
                         unstuck_mode = True
                         unstuck_attempts = 0
@@ -710,7 +694,7 @@ def main():
                         dx_left = np.sin(np.radians(left_angle))
                         dz_left = np.cos(np.radians(left_angle))
                         left_cell = (int(player_pos.x + dx_left), int(player_pos.z + dz_left))
-                        if maze[left_cell[1]][left_cell[0]] != "#":
+                        if maze[left_cell[1]][left_cell[0]] not in ('#', 'B'):
                             start_angle = player_angle_deg
                             target_angle = left_angle
                             turn_progress = 0.0
@@ -721,7 +705,7 @@ def main():
                             dx_right = np.sin(np.radians(right_angle))
                             dz_right = np.cos(np.radians(right_angle))
                             right_cell = (int(player_pos.x + dx_right), int(player_pos.z + dz_right))
-                            if maze[right_cell[1]][right_cell[0]] != "#":
+                            if maze[right_cell[1]][right_cell[0]] not in ('#', 'B'):
                                 start_angle = player_angle_deg
                                 target_angle = right_angle
                                 turn_progress = 0.0
@@ -807,6 +791,7 @@ def main():
                 if 0 <= i < rows and 0 <= j < cols:
                     discovered[i][j] = True
 
+        # Reveal additional nearby wall edges.
         if player_cell_x + 2 < cols and maze[player_cell_z][player_cell_x+2] == '#' and maze[player_cell_z][player_cell_x+1] != '#':
             discovered[player_cell_z][player_cell_x+2] = True
         if player_cell_x - 2 >= 0 and maze[player_cell_z][player_cell_x-2] == '#' and maze[player_cell_z][player_cell_x-1] != '#':
@@ -839,18 +824,18 @@ def main():
                 nz = cz + step_z
                 if nx < 0 or nx >= cols or nz < 0 or nz >= rows:
                     break
-                if maze[nz][nx] == '#' or maze[nz][nx] == 'E':
+                if maze[nz][nx] in ('#', 'B', 'E'):
                     break
                 discovered[nz][nx] = True
                 if step_x != 0:
-                    if nz+1 < rows and maze[nz+1][nx] not in "#E":
+                    if nz+1 < rows and maze[nz+1][nx] not in ('#', 'B', 'E'):
                         discovered[nz+1][nx] = True
-                    if nz-1 >= 0 and maze[nz-1][nx] not in "#E":
+                    if nz-1 >= 0 and maze[nz-1][nx] not in ('#', 'B', 'E'):
                         discovered[nz-1][nx] = True
                 if step_z != 0:
-                    if nx+1 < cols and maze[nz][nx+1] not in "#E":
+                    if nx+1 < cols and maze[nz][nx+1] not in ('#', 'B', 'E'):
                         discovered[nz][nx+1] = True
-                    if nx-1 >= 0 and maze[nz][nx-1] not in "#E":
+                    if nx-1 >= 0 and maze[nz][nx-1] not in ('#', 'B', 'E'):
                         discovered[nz][nx-1] = True
                 cx, cz = nx, nz
                 depth += 1
@@ -930,7 +915,6 @@ def main():
         glfw.swap_buffers(window)
         glfw.poll_events()
         
-        # When the player hits the exit, reset the game.
         if maze[int(player_pos.z)][int(player_pos.x)] == "E":
             print("You found the exit! Resetting game...")
             reset_requested = True
