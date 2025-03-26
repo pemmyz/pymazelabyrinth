@@ -96,6 +96,20 @@ Here's a quick explanation of all the modules and libraries used in this project
 | `time` | Time measurement utilities, often used for frame timing. |
 | `collections.deque` | Double-ended queue for fast FIFO/LIFO operations, useful in pathfinding or input buffering. |
 
+
+## 🤖 AI Assistance Disclaimer
+
+This game was created with the assistance of AI tools (e.g., ChatGPT) for various tasks such as:
+
+- Code suggestions and debugging  
+- Design ideas and architectural guidance  
+- Problem-solving and refactoring help  
+- Occasional motivational pep talks
+
+While AI provided helpful input during development, all decisions, edits, and final implementations were made by a human (yes, really).  
+Think of it as pair programming… with a very talkative robot.
+
+
 Used textures:
 https://opengameart.org/content/tileable-dirt-textures
 https://opengameart.org/content/bricks-tiled-texture-64x64
