@@ -24,8 +24,9 @@ def create_map(width, height, max_rooms, room_min_size, room_max_size, seed=None
     - The room borders (including the corners) remain walls ('#').
     - Corridors are carved out as open spaces.
     - The exit is marked as 'E'.
-    - After carving, any wall cell that is not adjacent to an open cell (' ' or 'E')
-      is converted to black ('B').
+    - After carving, any wall cell that is not adjacent (cardinally)
+      to an open cell (' ' or 'E') is converted to black ('B'),
+      except if the cell is a corner of any room.
     """
     if seed is not None:
         print("Creating map with seed:", seed)
@@ -131,10 +132,22 @@ def create_map(width, height, max_rooms, room_min_size, room_max_size, seed=None
         map_grid[exit_y][exit_x] = 'E'
 
     # Convert wall cells: if a cell is '#' and has no adjacent open cell (' ' or 'E'),
-    # mark it as black ('B').
+    # mark it as black ('B'), except if the cell is a room corner.
     for i in range(height):
         for j in range(width):
             if map_grid[i][j] == '#':
+                # Check if this cell is a corner of any room.
+                is_room_corner = False
+                for room in rooms:
+                    corners = [(room.x1, room.y1),
+                               (room.x2 - 1, room.y1),
+                               (room.x1, room.y2 - 1),
+                               (room.x2 - 1, room.y2 - 1)]
+                    if (j, i) in corners:
+                        is_room_corner = True
+                        break
+                if is_room_corner:
+                    continue
                 adjacent_open = False
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     nx, ny = j + dx, i + dy

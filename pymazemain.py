@@ -313,6 +313,8 @@ def draw_help(window_width, window_height):
     glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
 
+# The drawing routines for the full map and minimap remain the same,
+# except that the player icon is centered exactly in its cell.
 def draw_full_map(window_width, window_height):
     global full_map_offset_x, full_map_offset_y
     if not full_map_panned:
@@ -381,7 +383,7 @@ def draw_full_map(window_width, window_height):
             glVertex2f(x, y + cell_size)
             glEnd()
     
-    # Draw the player icon in full map.
+    # Center the player icon within its cell.
     player_cell_x = int(player_pos.x)
     player_cell_z = int(player_pos.z)
     icon_x = start_x + player_cell_x * cell_size + (cell_size - 8) / 2
@@ -436,7 +438,6 @@ def draw_minimap(window_width, window_height):
     glVertex2f(start_x - 2, start_y + map_height_pixels + 2)
     glEnd()
     
-    # Draw region cells.
     rows_map = len(maze)
     cols_map = len(maze[0])
     for i in range(region_size):
@@ -466,8 +467,7 @@ def draw_minimap(window_width, window_height):
             glVertex2f(x, y + cell_size)
             glEnd()
     
-    # Draw player icon in minimap.
-    # Compute the player's position relative to the minimap region:
+    # Compute player's position relative to the minimap region.
     rel_x = (player_cell_x - start_cell_x)
     rel_y = (region_size - 1) - (player_cell_z - start_cell_z)
     icon_x = start_x + rel_x * cell_size + (cell_size - 8) / 2
