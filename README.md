@@ -6,6 +6,12 @@ W.I.P. tested on Python 3.10.12 (main, Feb  4 2025, 14:57:36) [GCC 11.4.0] on li
 
 A 3D first-person maze exploration game built with **Python**, **OpenGL**, and **GLFW**. Explore procedurally generated mazes, navigate through rooms and corridors, or let the AI bot find the way out using pathfinding algorithms!
 
+## Screenshots
+
+### Game
+![Game 1](screenshots/game_1.png)
+
+
 ---
 
 ## 🎮 Features
