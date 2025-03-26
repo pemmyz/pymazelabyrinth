@@ -1,5 +1,77 @@
 # pymazelabyrinth
 3D Maze
+W.I.P. 
+
+# 🧱 Brick Labyrinth
+
+A 3D first-person maze exploration game built with **Python**, **OpenGL**, and **GLFW**. Explore procedurally generated mazes, navigate through rooms and corridors, or let the AI bot find the way out using pathfinding algorithms!
+
+---
+
+## 🎮 Features
+
+- 🧭 **Procedural Maze Generation**
+  - Generates random dungeons with rooms, corridors, and exits
+  - Inspired by NetHack-style maps
+
+- 👁️ **3D First-Person View**
+  - Navigate the maze with keyboard controls
+  - Smooth movement and turning animations
+  - Textured floors, walls, ceilings
+
+- 🗺️ **Map Overlays**
+  - **Minimap** showing nearby discovered cells
+  - **Full map** view with mouse panning
+  - **Fog of war** effect: only discovered areas are visible
+
+- 🤖 **AI Bot Mode**
+  - Toggleable bot to auto-navigate the maze
+  - Supports multiple pathfinding algorithms:
+    - BFS (Breadth-First Search)
+    - DFS (Depth-First Search)
+    - A* (A-star)
+    - EXPLORE (visit all rooms, then exit)
+
+---
+
+## 🕹️ Controls
+
+| Key | Action |
+|-----|--------|
+| `W` | Move forward |
+| `S` | Move backward |
+| `A` | Turn left |
+| `D` | Turn right |
+| `P` | Pause/Unpause game |
+| `M` | Toggle full map view |
+| `H` | Toggle help overlay |
+| `B` | Toggle bot mode |
+| `1` | Select BFS algorithm |
+| `2` | Select DFS algorithm |
+| `3` | Select A* algorithm |
+| `4` | Select EXPLORE mode |
+| `R` | Reset maze |
+| `Esc` | Exit game |
+| `Mouse + Drag` | Pan the full map view |
+
+---
+
+## 🚀 Getting Started
+
+### 📦 Requirements
+
+- Python 3.x
+- GLFW
+- PyOpenGL
+- NumPy
+- PIL (Pillow)
+- `nethack_map_generator.py` and `bot_pathfinding.py` (included or to be added)
+
+### ▶️ Run the game
+
+```bash
+python3 brick_labyrinth.py
+
 
 ## 🧩 Module Overview
 
