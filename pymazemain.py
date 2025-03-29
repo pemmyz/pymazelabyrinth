@@ -551,7 +551,7 @@ def main():
     
     if not glfw.init():
         return False
-    window = glfw.create_window(800, 600, "Brick Labyrinth", None, None)
+    window = glfw.create_window(800, 600, "pymazelabyrinth", None, None)
     if not window:
         glfw.terminate()
         return False
