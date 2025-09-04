@@ -1,7 +1,7 @@
 # 🧱 pymazelabyrinth
 
--This project predates [js_mazelabyrinth](https://github.com/pemmyz/js_mazelabyrinth) and [js_mazelabyrinth_redux](https://github.com/pemmyz/js_mazelabyrinth_redux) which are originally based on this project.
--For all the latest features and fixes please check [js_mazelabyrinth](https://github.com/pemmyz/js_mazelabyrinth) and [js_mazelabyrinth_redux](https://github.com/pemmyz/js_mazelabyrinth_redux)
+- This project predates [js_mazelabyrinth](https://github.com/pemmyz/js_mazelabyrinth) and [js_mazelabyrinth_redux](https://github.com/pemmyz/js_mazelabyrinth_redux) which are originally based on this project.
+- For all the latest features and fixes please check [js_mazelabyrinth](https://github.com/pemmyz/js_mazelabyrinth) and [js_mazelabyrinth_redux](https://github.com/pemmyz/js_mazelabyrinth_redux)
 
 W.I.P. Fully playable demo. 
 Tested on Python 3.10.12 (main, Feb  4 2025, 14:57:36) [GCC 11.4.0] on linux
